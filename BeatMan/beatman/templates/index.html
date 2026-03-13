@@ -1,0 +1,1647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BeatMan</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+            color: #333;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { margin-bottom: 30px; color: #1db954; }
+        h2 { margin: 30px 0 15px; font-size: 20px; }
+        
+        .section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        button {
+            background: #1db954;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        button:hover { background: #1aa34a; }
+        button.delete { background: #e74c3c; }
+        button.delete:hover { background: #c0392b; }
+        button.secondary { background: #3498db; }
+        button.secondary:hover { background: #2980b9; }
+        
+        .playlist-item, .download-item {
+            border: 1px solid #eee;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            background: #fafafa;
+        }
+        
+        .playlist-header, .download-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        
+        .playlist-name, .track-name {
+            font-weight: 600;
+            font-size: 16px;
+        }
+        
+        .playlist-url, .track-info {
+            color: #666;
+            font-size: 13px;
+            word-break: break-all;
+        }
+        
+        .last-checked {
+            color: #999;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        
+        .metadata-form {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        
+        .metadata-form input {
+            margin-bottom: 8px;
+        }
+        
+        .inline-group {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+        
+        .inline-group .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .carousel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .carousel-counter {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .carousel-nav {
+            display: flex;
+            gap: 10px;
+        }
+
+        .carousel-nav button {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+
+        input.modified {
+            border-left: 3px solid #f39c12;
+            background-color: #fffbf0;
+        }
+
+        input.modified:focus {
+            border-left-color: #e67e22;
+        }
+
+        .album-art-upload {
+            display: inline-block;
+        }
+
+        .album-art-upload input[type="file"] {
+            display: none;
+        }
+
+        .album-art-upload label {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #3498db;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: background 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .album-art-upload label:hover {
+            background: #2980b9;
+            transform: translateY(-1px);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+        }
+
+        /* Album art wrapper for hover effect */
+        .album-art-wrapper {
+            position: relative;
+            display: inline-block;
+            max-width: 150px;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .album-art-wrapper img {
+            display: block;
+            max-width: 150px;
+            max-height: 150px;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .album-art-wrapper.no-art {
+            width: 150px;
+            height: 150px;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .no-art-placeholder {
+            color: #999;
+            font-size: 13px;
+        }
+
+        /* Hover overlay with semitransparent shadow */
+        .album-art-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            border-radius: 6px;
+        }
+
+        .album-art-wrapper:hover .album-art-overlay {
+            opacity: 1;
+        }
+
+        /* Tab Navigation */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            background: #f8f8f8;
+            color: #333;
+        }
+
+        .tab.active {
+            color: #1db954;
+            border-bottom-color: #1db954;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Compact carousel design */
+        .carousel-item {
+            border: 1px solid #eee;
+            padding: 15px;
+            border-radius: 4px;
+            background: #fafafa;
+        }
+
+        .file-info {
+            background: #f0f0f0;
+            padding: 8px 10px;
+            border-radius: 4px;
+            margin-bottom: 12px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .album-art-container {
+            text-align: center;
+            margin-bottom: 12px;
+        }
+
+        .metadata-form .form-group {
+            margin-bottom: 10px;
+        }
+
+        .metadata-form label {
+            font-size: 13px;
+            margin-bottom: 3px;
+        }
+
+        .metadata-form input {
+            padding: 6px 10px;
+            font-size: 13px;
+        }
+
+        /* Loading spinner */
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Toast messages */
+        .status {
+            padding: 10px 12px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-size: 13px;
+            opacity: 0;
+            transition: opacity 0.3s, max-height 0.3s;
+            max-height: 0;
+            overflow: hidden;
+        }
+
+        .status.show {
+            opacity: 1;
+            max-height: 200px;
+        }
+
+        /* Disabled button styling */
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* Under construction */
+        .under-construction {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .under-construction h3 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        /* Modal styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 8px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 20px;
+            color: #333;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .metadata-display {
+            background: #f8f8f8;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .metadata-display .album-art-small {
+            max-width: 120px;
+            max-height: 120px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .metadata-row {
+            display: flex;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .metadata-row strong {
+            min-width: 140px;
+            color: #666;
+        }
+
+        .metadata-row span {
+            color: #333;
+        }
+
+        .path-preview {
+            background: #e8f5e9;
+            padding: 10px 12px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            margin-top: 8px;
+            word-break: break-all;
+            color: #2e7d32;
+        }
+
+        button.cancel {
+            background: #95a5a6;
+        }
+
+        button.cancel:hover {
+            background: #7f8c8d;
+        }
+
+        select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            background: white;
+        }
+
+        .path-editor {
+            margin-top: 15px;
+        }
+
+        .path-editor textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+            font-family: 'Courier New', monospace;
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        /* Audio Player */
+        .audio-player-container {
+            text-align: center;
+            margin-bottom: 12px;
+            padding: 10px;
+            background: #f8f8f8;
+            border-radius: 6px;
+        }
+
+        .audio-player-container audio {
+            width: 100%;
+            max-width: 400px;
+            height: 40px;
+            outline: none;
+        }
+
+        .audio-player-container audio::-webkit-media-controls-panel {
+            background-color: #fafafa;
+        }
+
+        /* Browse Tracks Styles */
+        .browse-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .library-selector {
+            margin-bottom: 20px;
+        }
+
+        .hierarchy-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .artist-item, .album-item {
+            border: 1px solid #eee;
+            border-radius: 4px;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+
+        .artist-item:hover, .album-item:hover {
+            border-color: #1db954;
+        }
+
+        .artist-header, .album-header {
+            padding: 12px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            background: #fafafa;
+        }
+
+        .artist-header:hover, .album-header:hover {
+            background: #f0f0f0;
+        }
+
+        .artist-name, .album-name {
+            font-weight: 600;
+            font-size: 15px;
+            color: #333;
+        }
+
+        .expand-icon {
+            font-size: 12px;
+            color: #666;
+            transition: transform 0.2s;
+        }
+
+        .expand-icon.expanded {
+            transform: rotate(180deg);
+        }
+
+        .albums-container, .tracks-container {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            background: white;
+            padding: 0 15px;
+        }
+
+        .albums-container.expanded, .tracks-container.expanded {
+            max-height: 2000px;
+            padding: 10px 15px;
+        }
+
+        .album-item {
+            margin-bottom: 8px;
+            border-color: #ddd;
+        }
+
+        .track-row {
+            padding: 10px 15px;
+            background: white;
+            border-bottom: 1px solid #f5f5f5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .track-row:last-child {
+            border-bottom: none;
+        }
+
+        .track-row:hover {
+            background: #f9f9f9;
+        }
+
+        .track-info-browse {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .track-number-badge {
+            background: #e8e8e8;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        .track-title {
+            font-size: 14px;
+            color: #333;
+        }
+
+        .track-size {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .loading-browse {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .empty-browse {
+            text-align: center;
+            padding: 30px;
+            color: #999;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 BeatMan</h1>
+
+        <!-- Tab Navigation -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('download')">Download & Process</button>
+            <button class="tab" onclick="switchTab('browse')">Browse Tracks</button>
+            <button class="tab" onclick="switchTab('config')">Configuration</button>
+        </div>
+
+        <!-- Download & Process Tab -->
+        <div id="download-tab" class="tab-content active">
+            <!-- Download Track Section -->
+            <div class="section">
+                <h2>Download Track</h2>
+                <div class="inline-group">
+                    <div class="form-group">
+                        <label>Spotify Track URL</label>
+                        <input type="text" id="trackUrl" placeholder="https://open.spotify.com/track/...">
+                    </div>
+                    <div style="flex: 0 0 auto;">
+                        <button id="downloadBtn" onclick="downloadTrack()">Download</button>
+                    </div>
+                </div>
+                <div id="trackDownloadStatus" class="status"></div>
+            </div>
+
+            <!-- Unprocessed Downloads Section -->
+            <div class="section">
+                <h2>Unprocessed Downloads</h2>
+                <div id="downloadsCarousel"></div>
+            </div>
+        </div>
+
+        <!-- Browse Tracks Tab -->
+        <div id="browse-tab" class="tab-content">
+            <div class="section">
+                <h2>Browse Tracks</h2>
+
+                <!-- Library Selection -->
+                <div class="library-selector">
+                    <div class="form-group">
+                        <label>Select Library</label>
+                        <select id="browseLibrarySelect" onchange="loadArtists()">
+                            <option value="">-- Select a library --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Browse Status Message -->
+                <div id="browseStatus" class="status"></div>
+
+                <!-- Hierarchy Container -->
+                <div id="browseHierarchy" class="hierarchy-container">
+                    <div class="empty-browse">Select a library to browse tracks</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Configuration Tab -->
+        <div id="config-tab" class="tab-content">
+            <div class="section">
+                <h2>Configuration</h2>
+                <div class="inline-group">
+                    <div class="form-group">
+                        <label>Storage Path</label>
+                        <input type="text" id="storagePath" placeholder="/path/to/music/library">
+                    </div>
+                    <div style="flex: 0 0 auto;">
+                        <button id="saveConfigBtn" onclick="saveConfig()">Save Config</button>
+                    </div>
+                </div>
+                <div id="configStatus" class="status"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Process Track Modal -->
+    <div id="processModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Process & Move to Storage</h2>
+            </div>
+            <div class="modal-body">
+                <!-- Track Metadata Display -->
+                <div class="metadata-display" id="modalMetadataDisplay">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+
+                <!-- Folder Selection -->
+                <div class="form-group">
+                    <label>Select Destination Folder</label>
+                    <select id="ftpFolderSelect">
+                        <option value="">Loading folders...</option>
+                    </select>
+                </div>
+
+                <!-- Path Editor -->
+                <div class="path-editor">
+                    <label>Destination Path</label>
+                    <textarea id="destinationPath" placeholder="Path will be generated..."></textarea>
+                    <div class="path-preview" id="pathPreview"></div>
+                </div>
+
+                <div id="modalStatus" class="status"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="cancel" onclick="closeProcessModal()">Cancel</button>
+                <button id="modalSubmitBtn" onclick="submitProcess()">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let currentCarouselIndex = 0;
+        let totalUnprocessed = 0;
+        let currentItemIndex = null;
+
+        // Load initial data
+        loadConfig();
+        loadDownloadsCarousel();
+
+        // Refresh downloads every 30 seconds
+        setInterval(loadDownloadsCarousel, 30000);
+
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+            event.target.classList.add('active');
+
+            // Initialize browse tab if selected
+            if (tabName === 'browse') {
+                initializeBrowseTab();
+            }
+        }
+
+        async function loadConfig() {
+            const response = await fetch('/api/config');
+            const config = await response.json();
+
+            document.getElementById('storagePath').value = config.storage_path || '';
+        }
+
+        async function saveConfig() {
+            const button = document.getElementById('saveConfigBtn');
+            const originalText = button.innerHTML;
+            const startTime = Date.now();
+
+            button.disabled = true;
+            button.innerHTML = '<span class="spinner"></span>Saving...';
+
+            try {
+                const config = {
+                    storage_path: document.getElementById('storagePath').value
+                };
+
+                const response = await fetch('/api/config', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(config)
+                });
+
+                showStatus('configStatus', 'Configuration saved!', 'success');
+            } catch (error) {
+                showStatus('configStatus', `Error: ${error.message}`, 'error');
+            } finally {
+                // Ensure spinner shows for at least 500ms
+                const elapsed = Date.now() - startTime;
+                const remaining = Math.max(0, 500 - elapsed);
+                setTimeout(() => {
+                    button.disabled = false;
+                    button.innerHTML = originalText;
+                }, remaining);
+            }
+        }
+
+        async function downloadTrack() {
+            const trackUrl = document.getElementById('trackUrl').value.trim();
+
+            if (!trackUrl) {
+                showStatus('trackDownloadStatus', 'Please enter a Spotify track URL', 'error');
+                return;
+            }
+
+            const button = document.getElementById('downloadBtn');
+            const originalText = button.innerHTML;
+            const startTime = Date.now();
+
+            button.disabled = true;
+            button.innerHTML = '<span class="spinner"></span>Downloading...';
+
+            try {
+                const response = await fetch('/api/download-track', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({url: trackUrl})
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showStatus('trackDownloadStatus', `Downloaded: ${result.track}`, 'success');
+                    document.getElementById('trackUrl').value = '';
+                    // Refresh the carousel to show the new download
+                    loadDownloadsCarousel();
+                } else {
+                    showStatus('trackDownloadStatus', `Error: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showStatus('trackDownloadStatus', `Error: ${error.message}`, 'error');
+            } finally {
+                // Ensure spinner shows for at least 500ms
+                const elapsed = Date.now() - startTime;
+                const remaining = Math.max(0, 500 - elapsed);
+                setTimeout(() => {
+                    button.disabled = false;
+                    button.innerHTML = originalText;
+                }, remaining);
+            }
+        }
+        
+        // Playlist monitoring functions (disabled - uncomment to re-enable)
+        // async function loadPlaylists() {
+        //     const response = await fetch('/api/playlists');
+        //     const playlists = await response.json();
+        //
+        //     const container = document.getElementById('playlistsList');
+        //
+        //     if (playlists.length === 0) {
+        //         container.innerHTML = '<div class="empty-state">No playlists being monitored yet</div>';
+        //         return;
+        //     }
+        //
+        //     container.innerHTML = playlists.map((playlist, index) => `
+        //         <div class="playlist-item">
+        //             <div class="playlist-header">
+        //                 <div>
+        //                     <div class="playlist-name">${escapeHtml(playlist.name)}</div>
+        //                     <div class="playlist-url">${escapeHtml(playlist.url)}</div>
+        //                     ${playlist.last_checked ? `<div class="last-checked">Last checked: ${formatDate(playlist.last_checked)}</div>` : ''}
+        //                 </div>
+        //                 <button class="delete" onclick="deletePlaylist(${index})">Remove</button>
+        //             </div>
+        //         </div>
+        //     `).join('');
+        // }
+        //
+        // async function addPlaylist() {
+        //     const name = document.getElementById('playlistName').value.trim();
+        //     const url = document.getElementById('playlistUrl').value.trim();
+        //
+        //     if (!name || !url) {
+        //         showStatus('playlistStatus', 'Please enter both name and URL', 'error');
+        //         return;
+        //     }
+        //
+        //     const response = await fetch('/api/playlists', {
+        //         method: 'POST',
+        //         headers: {'Content-Type': 'application/json'},
+        //         body: JSON.stringify({name, url})
+        //     });
+        //
+        //     if (response.ok) {
+        //         document.getElementById('playlistName').value = '';
+        //         document.getElementById('playlistUrl').value = '';
+        //         showStatus('playlistStatus', 'Playlist added!', 'success');
+        //         loadPlaylists();
+        //     }
+        // }
+        //
+        // async function deletePlaylist(index) {
+        //     if (!confirm('Remove this playlist from monitoring?')) return;
+        //
+        //     await fetch(`/api/playlists/${index}`, {method: 'DELETE'});
+        //     loadPlaylists();
+        // }
+        
+        async function loadDownloadsCarousel() {
+            // Get count of unprocessed items
+            const countResponse = await fetch('/api/downloads/count');
+            const countData = await countResponse.json();
+            totalUnprocessed = countData.count;
+
+            const container = document.getElementById('downloadsCarousel');
+
+            if (totalUnprocessed === 0) {
+                container.innerHTML = '<div class="empty-state">No unprocessed downloads</div>';
+                currentCarouselIndex = 0;
+                currentItemIndex = null;
+                return;
+            }
+
+            // Reset index if it's out of bounds
+            if (currentCarouselIndex >= totalUnprocessed) {
+                currentCarouselIndex = 0;
+            }
+
+            // Get current item
+            const itemResponse = await fetch(`/api/downloads/item?index=${currentCarouselIndex}`);
+            const itemData = await itemResponse.json();
+
+            if (!itemData.success) {
+                showStatus('downloadStatus', `Error: ${itemData.error}`, 'error');
+                return;
+            }
+
+            // Preserve current input values only if staying on same item (refresh, not navigation)
+            const preservedValues = {};
+            const titleEl = document.getElementById('title');
+            const isNavigating = titleEl && titleEl.dataset.navigating === 'true';
+            const isSameItem = titleEl && currentItemIndex === itemData.index;
+
+            if (titleEl && isSameItem && !isNavigating) {
+                preservedValues.title = titleEl.value;
+                preservedValues.contributing_artists = document.getElementById('contributing_artists').value;
+                preservedValues.album_artist = document.getElementById('album_artist').value;
+                preservedValues.album = document.getElementById('album').value;
+                preservedValues.year = document.getElementById('year').value;
+                preservedValues.track_number = document.getElementById('track_number').value;
+            }
+
+            currentItemIndex = itemData.index;
+            const metadata = itemData.metadata;
+
+            // Use preserved values if available, otherwise use file metadata
+            const values = Object.keys(preservedValues).length > 0 ? preservedValues : metadata;
+
+            container.innerHTML = `
+                <div class="carousel-header">
+                    <div class="carousel-counter">
+                        Item ${currentCarouselIndex + 1} of ${totalUnprocessed}
+                    </div>
+                    <div class="carousel-nav">
+                        <button onclick="navigateCarousel(-1)" ${currentCarouselIndex === 0 ? 'disabled' : ''}>← Previous</button>
+                        <button onclick="navigateCarousel(1)" ${currentCarouselIndex >= totalUnprocessed - 1 ? 'disabled' : ''}>Next →</button>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <div class="file-info">
+                        <strong>File:</strong> ${escapeHtml(itemData.filename)}<br>
+                        <strong>Downloaded:</strong> ${formatDate(itemData.downloaded_at)}
+                    </div>
+                    <!-- Audio Player -->
+                    <div class="audio-player-container">
+                        <audio id="audioPlayer" controls preload="metadata">
+                            <source src="/api/downloads/${itemData.index}/audio" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    ${itemData.album_art ? `
+                    <div class="album-art-container">
+                        <div class="album-art-wrapper">
+                            <img src="data:image/jpeg;base64,${itemData.album_art}" alt="Album Art" id="albumArtPreview">
+                            <div class="album-art-overlay">
+                                <div class="album-art-upload">
+                                    <input type="file" id="albumArtFile" accept="image/*" onchange="handleAlbumArtUpload(event)">
+                                    <label for="albumArtFile">Change</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    ` : `
+                    <div class="album-art-container">
+                        <div class="album-art-wrapper no-art">
+                            <div class="no-art-placeholder">No album art</div>
+                            <div class="album-art-overlay">
+                                <div class="album-art-upload">
+                                    <input type="file" id="albumArtFile" accept="image/*" onchange="handleAlbumArtUpload(event)">
+                                    <label for="albumArtFile">Add Art</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    `}
+                    <div class="metadata-form">
+                        <div class="form-group">
+                            <label>Title</label>
+                            <input type="text" id="title" value="${escapeHtml(values.title || '')}" data-original="${escapeHtml(metadata.title || '')}" oninput="markModified(this)">
+                        </div>
+                        <div class="form-group">
+                            <label>Contributing Artists</label>
+                            <input type="text" id="contributing_artists" value="${escapeHtml(values.contributing_artists || '')}" data-original="${escapeHtml(metadata.contributing_artists || '')}" oninput="markModified(this)">
+                        </div>
+                        <div class="form-group">
+                            <label>Album Artist</label>
+                            <input type="text" id="album_artist" value="${escapeHtml(values.album_artist || '')}" data-original="${escapeHtml(metadata.album_artist || '')}" oninput="markModified(this)">
+                        </div>
+                        <div class="form-group">
+                            <label>Album</label>
+                            <input type="text" id="album" value="${escapeHtml(values.album || '')}" data-original="${escapeHtml(metadata.album || '')}" oninput="markModified(this)">
+                        </div>
+                        <div class="inline-group">
+                            <div class="form-group">
+                                <label>Year</label>
+                                <input type="text" id="year" value="${escapeHtml(values.year || '')}" data-original="${escapeHtml(metadata.year || '')}" oninput="markModified(this)">
+                            </div>
+                            <div class="form-group">
+                                <label>Track Number</label>
+                                <input type="text" id="track_number" value="${escapeHtml(values.track_number || '')}" data-original="${escapeHtml(metadata.track_number || '')}" oninput="markModified(this)">
+                            </div>
+                        </div>
+                        <div style="margin-top: 12px;">
+                            <div style="display: flex; gap: 10px; margin-bottom: 5px;">
+                                <button class="secondary" id="saveMetadataBtn" onclick="updateMetadata()">Save Metadata</button>
+                                <button id="processBtn" onclick="processDownload()">Process & Move to Storage</button>
+                            </div>
+                            <div id="downloadStatus" class="status"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function markModified(input) {
+            if (input.value !== input.dataset.original) {
+                input.classList.add('modified');
+            } else {
+                input.classList.remove('modified');
+            }
+        }
+
+        async function handleAlbumArtUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Preview the image
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('albumArtPreview');
+                if (preview) {
+                    // Update existing image
+                    preview.src = e.target.result;
+                } else {
+                    // Create preview if it doesn't exist (no-art scenario)
+                    const wrapper = document.querySelector('.album-art-wrapper');
+                    const noArtPlaceholder = wrapper.querySelector('.no-art-placeholder');
+
+                    if (noArtPlaceholder) {
+                        // Remove placeholder and no-art class
+                        noArtPlaceholder.remove();
+                        wrapper.classList.remove('no-art');
+
+                        // Create and insert image before overlay
+                        const img = document.createElement('img');
+                        img.id = 'albumArtPreview';
+                        img.alt = 'Album Art';
+                        img.src = e.target.result;
+                        wrapper.insertBefore(img, wrapper.querySelector('.album-art-overlay'));
+                    }
+                }
+            };
+            reader.readAsDataURL(file);
+
+            // Upload the album art
+            const formData = new FormData();
+            formData.append('album_art', file);
+
+            const response = await fetch(`/api/downloads/${currentItemIndex}/album-art`, {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                showStatus('downloadStatus', 'Album art updated!', 'success');
+            } else {
+                showStatus('downloadStatus', `Error: ${result.error}`, 'error');
+            }
+        }
+
+        function navigateCarousel(direction) {
+            currentCarouselIndex += direction;
+            // Force reload without preserving values when navigating
+            const titleEl = document.getElementById('title');
+            if (titleEl) {
+                // Clear any preserved state by removing elements
+                titleEl.dataset.navigating = 'true';
+            }
+            loadDownloadsCarousel();
+        }
+
+        async function updateMetadata() {
+            if (currentItemIndex === null) return;
+
+            const button = document.getElementById('saveMetadataBtn');
+            const originalText = button.innerHTML;
+            const startTime = Date.now();
+
+            button.disabled = true;
+            button.innerHTML = '<span class="spinner"></span>Saving...';
+
+            try {
+                const metadata = {
+                    title: document.getElementById('title').value,
+                    contributing_artists: document.getElementById('contributing_artists').value,
+                    album_artist: document.getElementById('album_artist').value,
+                    album: document.getElementById('album').value,
+                    year: document.getElementById('year').value,
+                    track_number: document.getElementById('track_number').value
+                };
+
+                const response = await fetch(`/api/downloads/${currentItemIndex}/metadata`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(metadata)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showStatus('downloadStatus', 'Metadata saved to file!', 'success');
+                } else {
+                    showStatus('downloadStatus', `Error: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showStatus('downloadStatus', `Error: ${error.message}`, 'error');
+            } finally {
+                // Ensure spinner shows for at least 500ms
+                const elapsed = Date.now() - startTime;
+                const remaining = Math.max(0, 500 - elapsed);
+                setTimeout(() => {
+                    button.disabled = false;
+                    button.innerHTML = originalText;
+                }, remaining);
+            }
+        }
+
+        async function processDownload() {
+            if (currentItemIndex === null) return;
+            await openProcessModal();
+        }
+
+        async function openProcessModal() {
+            const modal = document.getElementById('processModal');
+            modal.classList.add('show');
+
+            // Load track metadata and display
+            await loadModalMetadata();
+
+            // Load FTP directories
+            await loadFtpDirectories();
+
+            // Clear any previous status
+            document.getElementById('modalStatus').className = 'status';
+            document.getElementById('modalStatus').textContent = '';
+        }
+
+        async function loadModalMetadata() {
+            // Get current item data
+            const itemResponse = await fetch(`/api/downloads/item?index=${currentCarouselIndex}`);
+            const itemData = await itemResponse.json();
+
+            if (!itemData.success) return;
+
+            const metadata = itemData.metadata;
+            const displayHtml = `
+                ${itemData.album_art ? `<img src="data:image/jpeg;base64,${itemData.album_art}" alt="Album Art" class="album-art-small">` : ''}
+                <div class="metadata-row"><strong>Title:</strong> <span>${escapeHtml(metadata.title || 'N/A')}</span></div>
+                <div class="metadata-row"><strong>Contributing Artists:</strong> <span>${escapeHtml(metadata.contributing_artists || 'N/A')}</span></div>
+                <div class="metadata-row"><strong>Album Artist:</strong> <span>${escapeHtml(metadata.album_artist || 'N/A')}</span></div>
+                <div class="metadata-row"><strong>Album:</strong> <span>${escapeHtml(metadata.album || 'N/A')}</span></div>
+                <div class="metadata-row"><strong>Year:</strong> <span>${escapeHtml(metadata.year || 'N/A')}</span></div>
+                <div class="metadata-row"><strong>Track Number:</strong> <span>${escapeHtml(metadata.track_number || 'N/A')}</span></div>
+                <div class="metadata-row"><strong>Filename:</strong> <span>${escapeHtml(itemData.filename)}</span></div>
+            `;
+
+            document.getElementById('modalMetadataDisplay').innerHTML = displayHtml;
+        }
+
+        async function loadFtpDirectories() {
+            const select = document.getElementById('ftpFolderSelect');
+            select.innerHTML = '<option value="">Loading folders...</option>';
+            select.disabled = true;
+
+            try {
+                const response = await fetch('/api/ftp/directories');
+                const result = await response.json();
+
+                if (result.success) {
+                    select.innerHTML = '<option value="">-- Select a folder --</option>';
+                    result.directories.forEach(dir => {
+                        const option = document.createElement('option');
+                        option.value = dir;
+                        option.textContent = dir;
+                        select.appendChild(option);
+                    });
+                    select.disabled = false;
+
+                    // Add change event listener to generate path
+                    select.onchange = generateDestinationPath;
+                } else {
+                    select.innerHTML = '<option value="">Error loading folders</option>';
+                    showStatus('modalStatus', `Error: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                select.innerHTML = '<option value="">Error loading folders</option>';
+                showStatus('modalStatus', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function generateDestinationPath() {
+            const select = document.getElementById('ftpFolderSelect');
+            const folder = select.value;
+            const pathInput = document.getElementById('destinationPath');
+            const preview = document.getElementById('pathPreview');
+
+            if (!folder) {
+                pathInput.value = '';
+                preview.textContent = 'Select a folder first';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/downloads/${currentItemIndex}/generate-path`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({folder: folder})
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    pathInput.value = result.path;
+                    preview.textContent = `📁 ${result.path}`;
+
+                    // Add input event listener for live preview
+                    pathInput.oninput = function() {
+                        preview.textContent = `📁 ${this.value}`;
+                    };
+                } else {
+                    showStatus('modalStatus', `Error: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showStatus('modalStatus', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function submitProcess() {
+            const folder = document.getElementById('ftpFolderSelect').value;
+            const path = document.getElementById('destinationPath').value;
+
+            if (!folder) {
+                showStatus('modalStatus', 'Please select a folder', 'error');
+                return;
+            }
+
+            if (!path) {
+                showStatus('modalStatus', 'Please provide a destination path', 'error');
+                return;
+            }
+
+            const button = document.getElementById('modalSubmitBtn');
+            const originalText = button.innerHTML;
+            const startTime = Date.now();
+
+            button.disabled = true;
+            button.innerHTML = '<span class="spinner"></span>Processing...';
+
+            try {
+                const response = await fetch(`/api/downloads/${currentItemIndex}/process`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        folder: folder,
+                        path: path
+                    })
+                });
+
+                const result = await response.json();
+
+                // Ensure spinner shows for at least 500ms
+                const elapsed = Date.now() - startTime;
+                const minDelay = Math.max(0, 500 - elapsed);
+
+                if (result.success) {
+                    showStatus('modalStatus', 'Track processed successfully!', 'success');
+                    // Wait for success message, then close modal and reload
+                    setTimeout(() => {
+                        button.disabled = false;
+                        button.innerHTML = originalText;
+                        closeProcessModal();
+                        loadDownloadsCarousel();
+                    }, minDelay + 1000);
+                } else {
+                    showStatus('modalStatus', `Error: ${result.error}`, 'error');
+                    setTimeout(() => {
+                        button.disabled = false;
+                        button.innerHTML = originalText;
+                    }, minDelay);
+                }
+            } catch (error) {
+                showStatus('modalStatus', `Error: ${error.message}`, 'error');
+                const elapsed = Date.now() - startTime;
+                const remaining = Math.max(0, 500 - elapsed);
+                setTimeout(() => {
+                    button.disabled = false;
+                    button.innerHTML = originalText;
+                }, remaining);
+            }
+        }
+
+        function closeProcessModal() {
+            const modal = document.getElementById('processModal');
+            modal.classList.remove('show');
+
+            // Reset form
+            document.getElementById('ftpFolderSelect').selectedIndex = 0;
+            document.getElementById('destinationPath').value = '';
+            document.getElementById('pathPreview').textContent = '';
+        }
+        
+        function showStatus(elementId, message, type) {
+            const el = document.getElementById(elementId);
+            el.textContent = message;
+            el.className = `status ${type}`;
+
+            // Trigger fade-in
+            setTimeout(() => el.classList.add('show'), 10);
+
+            // Auto-dismiss after 3 seconds
+            setTimeout(() => {
+                el.classList.remove('show');
+            }, 3000);
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function formatDate(isoString) {
+            const date = new Date(isoString);
+            // Format in America/New_York timezone
+            return date.toLocaleString('en-US', {
+                timeZone: 'America/New_York',
+                year: 'numeric',
+                month: 'numeric',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true
+            });
+        }
+
+        // ========================================
+        // BROWSE TRACKS FUNCTIONALITY
+        // ========================================
+
+        let browseState = {
+            library: null,
+            expandedArtists: new Set(),
+            expandedAlbums: new Set()
+        };
+
+        function initializeBrowseTab() {
+            loadBrowseLibraries();
+        }
+
+        async function loadBrowseLibraries() {
+            const select = document.getElementById('browseLibrarySelect');
+            select.innerHTML = '<option value="">Loading libraries...</option>';
+            select.disabled = true;
+
+            try {
+                const response = await fetch('/api/ftp/directories');
+                const result = await response.json();
+
+                if (result.success) {
+                    select.innerHTML = '<option value="">-- Select a library --</option>';
+                    result.directories.forEach(dir => {
+                        const option = document.createElement('option');
+                        option.value = dir;
+                        option.textContent = dir;
+                        select.appendChild(option);
+                    });
+                    select.disabled = false;
+                } else {
+                    select.innerHTML = '<option value="">Error loading libraries</option>';
+                    showStatus('browseStatus', `Error: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                select.innerHTML = '<option value="">Error loading libraries</option>';
+                showStatus('browseStatus', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function loadArtists() {
+            const library = document.getElementById('browseLibrarySelect').value;
+            const container = document.getElementById('browseHierarchy');
+
+            if (!library) {
+                container.innerHTML = '<div class="empty-browse">Select a library to browse tracks</div>';
+                return;
+            }
+
+            browseState.library = library;
+            browseState.expandedArtists.clear();
+            browseState.expandedAlbums.clear();
+
+            container.innerHTML = '<div class="loading-browse"><span class="spinner"></span> Loading artists...</div>';
+
+            try {
+                const response = await fetch(`/api/browse/artists?library=${encodeURIComponent(library)}`);
+                const result = await response.json();
+
+                if (result.success) {
+                    if (result.artists.length === 0) {
+                        container.innerHTML = '<div class="empty-browse">No artists found in this library</div>';
+                        return;
+                    }
+
+                    renderArtists(result.artists);
+                } else {
+                    container.innerHTML = '<div class="empty-browse">Error loading artists</div>';
+                    showStatus('browseStatus', `Error: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                container.innerHTML = '<div class="empty-browse">Error loading artists</div>';
+                showStatus('browseStatus', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        function renderArtists(artists) {
+            const container = document.getElementById('browseHierarchy');
+
+            const html = artists.map(artist => `
+                <div class="artist-item" data-artist="${escapeHtml(artist)}">
+                    <div class="artist-header" onclick="toggleArtist('${escapeHtml(artist)}')">
+                        <div class="artist-name">${escapeHtml(artist)}</div>
+                        <span class="expand-icon">▼</span>
+                    </div>
+                    <div class="albums-container" id="albums-${sanitizeId(artist)}"></div>
+                </div>
+            `).join('');
+
+            container.innerHTML = html;
+        }
+
+        async function toggleArtist(artist) {
+            const isExpanded = browseState.expandedArtists.has(artist);
+            const albumsContainer = document.getElementById(`albums-${sanitizeId(artist)}`);
+            const expandIcon = event.currentTarget.querySelector('.expand-icon');
+
+            if (isExpanded) {
+                browseState.expandedArtists.delete(artist);
+                albumsContainer.classList.remove('expanded');
+                expandIcon.classList.remove('expanded');
+            } else {
+                browseState.expandedArtists.add(artist);
+                expandIcon.classList.add('expanded');
+
+                if (albumsContainer.innerHTML.trim() === '') {
+                    albumsContainer.innerHTML = '<div class="loading-browse"><span class="spinner"></span> Loading albums...</div>';
+
+                    try {
+                        const response = await fetch(
+                            `/api/browse/albums?library=${encodeURIComponent(browseState.library)}&artist=${encodeURIComponent(artist)}`
+                        );
+                        const result = await response.json();
+
+                        if (result.success) {
+                            if (result.albums.length === 0) {
+                                albumsContainer.innerHTML = '<div class="empty-browse">No albums found</div>';
+                            } else {
+                                renderAlbums(albumsContainer, artist, result.albums);
+                            }
+                        } else {
+                            albumsContainer.innerHTML = '<div class="empty-browse">Error loading albums</div>';
+                            showStatus('browseStatus', `Error: ${result.error}`, 'error');
+                        }
+                    } catch (error) {
+                        albumsContainer.innerHTML = '<div class="empty-browse">Error loading albums</div>';
+                        showStatus('browseStatus', `Error: ${error.message}`, 'error');
+                    }
+                }
+
+                albumsContainer.classList.add('expanded');
+            }
+        }
+
+        function renderAlbums(container, artist, albums) {
+            const html = albums.map(album => {
+                const albumId = sanitizeId(`${artist}-${album}`);
+                return `
+                    <div class="album-item">
+                        <div class="album-header" onclick="toggleAlbum('${escapeHtml(artist)}', '${escapeHtml(album)}')">
+                            <div class="album-name">${escapeHtml(album)}</div>
+                            <span class="expand-icon">▼</span>
+                        </div>
+                        <div class="tracks-container" id="tracks-${albumId}"></div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = html;
+        }
+
+        async function toggleAlbum(artist, album) {
+            const albumKey = `${artist}/${album}`;
+            const isExpanded = browseState.expandedAlbums.has(albumKey);
+            const albumId = sanitizeId(`${artist}-${album}`);
+            const tracksContainer = document.getElementById(`tracks-${albumId}`);
+            const expandIcon = event.currentTarget.querySelector('.expand-icon');
+
+            if (isExpanded) {
+                browseState.expandedAlbums.delete(albumKey);
+                tracksContainer.classList.remove('expanded');
+                expandIcon.classList.remove('expanded');
+            } else {
+                browseState.expandedAlbums.add(albumKey);
+                expandIcon.classList.add('expanded');
+
+                if (tracksContainer.innerHTML.trim() === '') {
+                    tracksContainer.innerHTML = '<div class="loading-browse"><span class="spinner"></span> Loading tracks...</div>';
+
+                    try {
+                        const response = await fetch(
+                            `/api/browse/tracks?library=${encodeURIComponent(browseState.library)}&artist=${encodeURIComponent(artist)}&album=${encodeURIComponent(album)}`
+                        );
+                        const result = await response.json();
+
+                        if (result.success) {
+                            if (result.tracks.length === 0) {
+                                tracksContainer.innerHTML = '<div class="empty-browse">No tracks found</div>';
+                            } else {
+                                renderTracks(tracksContainer, result.tracks);
+                            }
+                        } else {
+                            tracksContainer.innerHTML = '<div class="empty-browse">Error loading tracks</div>';
+                            showStatus('browseStatus', `Error: ${result.error}`, 'error');
+                        }
+                    } catch (error) {
+                        tracksContainer.innerHTML = '<div class="empty-browse">Error loading tracks</div>';
+                        showStatus('browseStatus', `Error: ${error.message}`, 'error');
+                    }
+                }
+
+                tracksContainer.classList.add('expanded');
+            }
+        }
+
+        function renderTracks(container, tracks) {
+            const html = tracks.map(track => `
+                <div class="track-row">
+                    <div class="track-info-browse">
+                        ${track.track_number ? `<span class="track-number-badge">${escapeHtml(track.track_number)}</span>` : ''}
+                        <span class="track-title">${escapeHtml(track.title)}</span>
+                    </div>
+                    <span class="track-size">${formatBytes(track.size)}</span>
+                </div>
+            `).join('');
+
+            container.innerHTML = html;
+        }
+
+        function sanitizeId(str) {
+            return str.replace(/[^a-zA-Z0-9]/g, '-').replace(/-+/g, '-');
+        }
+
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+    </script>
+</body>
+</html>

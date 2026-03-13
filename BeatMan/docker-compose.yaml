@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  spotify-monitor:
+    build: .
+    container_name: beatman
+    ports:
+      - "5000:5000"
+    environment:
+      - SPOTIFY_CLIENT_ID=${SPOTIFY_CLIENT_ID}
+      - SPOTIFY_CLIENT_SECRET=${SPOTIFY_CLIENT_SECRET}
+      - FTP_CONFIGURATION=${FTP_CONFIGURATION}
+    volumes:
+      # Mount volume for persistent config files
+      - ./storage/config:/app/config
+      # Mount your music storage directory
+      # UPDATE THIS PATH to your actual music library location
+      - ./storage/processed:/app/storage/processed
+      - ./storage/unprocessed:/app/storage/unprocessed
+    restart: unless-stopped
