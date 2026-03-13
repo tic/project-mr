@@ -1,0 +1,26 @@
+services:
+  quotefinder:
+    build: .
+    container_name: quotefinder
+    networks:
+      - quotefinder_net
+    volumes:
+      # Mount media input directory
+      - ./media:/media
+      # Mount output directory for JSON files
+      - ./output:/output
+      # Cache Whisper models to avoid re-downloading
+      - whisper-cache:/root/.cache/whisper
+      # OPTIONAL: Mount code for development (uncomment for dev mode)
+      - ./QuoteFinder:/app/QuoteFinder:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+    # Override command for interactive use
+    # command: --help
+
+networks:
+  quotefinder_net:
+    driver: bridge
+
+volumes:
+  whisper-cache:
