@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TeslaCam Viewer</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+  <!-- ═══ SIDEBAR ═══ -->
+  <aside id="sidebar">
+    <div id="sidebar-header">
+      <div id="logo">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22">
+          <path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>
+        </svg>
+        TeslaCam
+      </div>
+      <button id="open-folder-btn">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
+          <path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/>
+        </svg>
+        Open Folder
+      </button>
+    </div>
+
+    <div id="filter-bar">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="saved">Saved</button>
+      <button class="filter-btn" data-filter="sentry">Sentry</button>
+      <button class="filter-btn" data-filter="recent">Recent</button>
+    </div>
+
+    <div id="events-container">
+      <div id="events-loading" class="loading-state" style="display:none">
+        <div class="spinner"></div>
+        <span>Scanning footage…</span>
+      </div>
+      <div id="events-empty" class="empty-state" style="display:none">
+        <span>No footage found.</span>
+      </div>
+      <ul id="events-list"></ul>
+    </div>
+  </aside>
+
+  <!-- ═══ MAIN ═══ -->
+  <main id="main">
+
+    <!-- Welcome screen -->
+    <div id="welcome-screen">
+      <div class="welcome-content">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="64" height="64" style="opacity:.25">
+          <path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z"/>
+        </svg>
+        <h2>Open a TeslaCam folder</h2>
+        <p>Click <strong>Open Folder</strong> in the sidebar to load footage<br/>from a USB drive or local directory.</p>
+        <p class="welcome-note">Works in Chrome, Edge, Firefox, and Safari</p>
+      </div>
+    </div>
+
+    <!-- Viewer (hidden until event is loaded) -->
+    <div id="viewer" style="display:none">
+
+      <!-- Event header -->
+      <div id="event-header">
+        <div id="event-info">
+          <span id="event-type-badge" class="badge"></span>
+          <span id="event-title"></span>
+        </div>
+        <div id="header-actions">
+          <button id="speed-unit-btn" class="btn-secondary btn-xs" title="Toggle speed units">mph</button>
+        </div>
+      </div>
+
+      <!-- Camera grid -->
+      <div id="camera-grid">
+
+        <!-- Front camera (main) -->
+        <div class="camera-cell" id="cam-front">
+          <div class="cam-label">Front</div>
+          <div class="video-wrapper" id="vw-front"></div>
+
+          <!-- SEI telemetry overlay -->
+          <div id="sei-overlay">
+            <!-- Loading state -->
+            <div id="sei-loading" class="sei-state" style="display:none">
+              <div class="spinner sei-spinner"></div>
+            </div>
+            <!-- Active state: telemetry data -->
+            <div id="sei-content" class="sei-state" style="display:none">
+              <div class="sei-row sei-row--primary">
+                <span id="sei-speed"   class="sei-speed"></span>
+                <span id="sei-gear"    class="sei-gear-badge"></span>
+                <span id="sei-ap"      class="sei-ap-badge" style="display:none"></span>
+                <span class="sei-divider"></span>
+                <span id="sei-blink-l" class="sei-blinker"                style="display:none">◀</span>
+                <span id="sei-blink-r" class="sei-blinker sei-blinker--r" style="display:none">▶</span>
+                <span id="sei-brake"   class="sei-brake"                  style="display:none">BRAKE</span>
+              </div>
+              <div class="sei-row sei-row--secondary">
+
+                <!-- Steering wheel (Tesla Model 3/Y style: 2 lower spokes + landscape hub) -->
+                <div class="sei-instrument">
+                  <svg id="sei-steer-wheel" viewBox="0 0 40 40" width="34" height="34"
+                       fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <!-- Outer rim -->
+                    <circle cx="20" cy="20" r="16" stroke="rgba(255,255,255,0.85)" stroke-width="2.5"/>
+                    <!-- Left spoke: 8 o'clock rim → left edge of hub -->
+                    <line x1="6.1" y1="28" x2="12" y2="21.5" stroke="rgba(255,255,255,0.85)" stroke-width="2.2"/>
+                    <!-- Right spoke: 4 o'clock rim → right edge of hub -->
+                    <line x1="33.9" y1="28" x2="28" y2="21.5" stroke="rgba(255,255,255,0.85)" stroke-width="2.2"/>
+                    <!-- Center hub pad (landscape rectangle) -->
+                    <rect x="11" y="17.5" width="18" height="7" rx="2.5"
+                          fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.85)" stroke-width="1.6"/>
+                  </svg>
+                  <span id="sei-steer-val" class="sei-instr-lbl">0°</span>
+                </div>
+
+                <span class="sei-divider"></span>
+
+                <!-- Compass rose -->
+                <div class="sei-instrument">
+                  <svg id="sei-compass" viewBox="0 0 40 40" width="36" height="36">
+                    <circle cx="20" cy="20" r="17" fill="rgba(0,0,0,0.25)" stroke="rgba(255,255,255,0.2)" stroke-width="0.75"/>
+                    <line x1="20" y1="3.5" x2="20" y2="7.5"  stroke="rgba(255,255,255,0.55)" stroke-width="1.2"/>
+                    <line x1="20" y1="32.5" x2="20" y2="36.5" stroke="rgba(255,255,255,0.2)" stroke-width="0.75"/>
+                    <line x1="3.5" y1="20" x2="7.5" y2="20"  stroke="rgba(255,255,255,0.2)" stroke-width="0.75"/>
+                    <line x1="32.5" y1="20" x2="36.5" y2="20" stroke="rgba(255,255,255,0.2)" stroke-width="0.75"/>
+                    <text x="20" y="10.5" text-anchor="middle" font-size="6.5" font-weight="700"
+                          fill="rgba(255,255,255,0.85)" font-family="system-ui,sans-serif">N</text>
+                    <text x="34"  y="23"  text-anchor="middle" font-size="5" fill="rgba(255,255,255,0.4)" font-family="system-ui,sans-serif">E</text>
+                    <text x="20"  y="36"  text-anchor="middle" font-size="5" fill="rgba(255,255,255,0.4)" font-family="system-ui,sans-serif">S</text>
+                    <text x="6"   y="23"  text-anchor="middle" font-size="5" fill="rgba(255,255,255,0.4)" font-family="system-ui,sans-serif">W</text>
+                    <!-- Car arrow — rotates with heading (0° = pointing toward N) -->
+                    <g id="sei-compass-car" transform="rotate(0,20,20)">
+                      <polygon points="20,10 17,25 20,22 23,25" fill="white" opacity="0.9"/>
+                    </g>
+                  </svg>
+                  <span id="sei-heading-val" class="sei-instr-lbl">N 0°</span>
+                </div>
+
+                <span class="sei-divider"></span>
+
+                <!-- G-force meter -->
+                <div class="sei-instrument">
+                  <svg viewBox="0 0 36 36" width="36" height="36">
+                    <circle cx="18" cy="18" r="15" fill="rgba(0,0,0,0.25)" stroke="rgba(255,255,255,0.2)" stroke-width="0.75"/>
+                    <circle cx="18" cy="18" r="7.5" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/>
+                    <line x1="3"  y1="18" x2="33" y2="18" stroke="rgba(255,255,255,0.12)" stroke-width="0.5"/>
+                    <line x1="18" y1="3"  x2="18" y2="33" stroke="rgba(255,255,255,0.12)" stroke-width="0.5"/>
+                    <circle id="sei-gforce-dot" cx="18" cy="18" r="3" fill="#e82127"/>
+                  </svg>
+                  <span id="sei-gforce-val" class="sei-instr-lbl">0.0g</span>
+                </div>
+
+              </div>
+            </div>
+            <!-- Unavailable state -->
+            <div id="sei-none" class="sei-state sei-none-lbl" style="display:none">No SEI</div>
+          </div>
+
+          <div class="cam-spinner" id="spinner-front"><div class="spinner"></div></div>
+        </div>
+
+        <!-- Side column -->
+        <div id="cam-side-column">
+          <div class="camera-cell camera-cell--small" id="cam-back">
+            <div class="cam-label">Back</div>
+            <div class="video-wrapper" id="vw-back"></div>
+            <div class="cam-spinner" id="spinner-back"><div class="spinner"></div></div>
+          </div>
+          <div class="camera-cell camera-cell--small" id="cam-left">
+            <div class="cam-label">Left</div>
+            <div class="video-wrapper" id="vw-left"></div>
+            <div class="cam-spinner" id="spinner-left"><div class="spinner"></div></div>
+          </div>
+          <div class="camera-cell camera-cell--small" id="cam-right">
+            <div class="cam-label">Right</div>
+            <div class="video-wrapper" id="vw-right"></div>
+            <div class="cam-spinner" id="spinner-right"><div class="spinner"></div></div>
+          </div>
+        </div>
+
+      </div><!-- /#camera-grid -->
+
+      <!-- Playback controls -->
+      <div id="controls">
+        <div id="progress-bar-container">
+          <span id="time-current">0:00</span>
+          <div id="progress-bar" role="slider" aria-label="Seek">
+            <div id="progress-fill"></div>
+            <div id="progress-thumb"></div>
+            <div id="event-marker" style="display:none" title="Jump to event (−5s)"></div>
+          </div>
+          <span id="time-total">0:00</span>
+        </div>
+        <div id="control-buttons">
+
+          <div id="left-controls">
+            <button id="btn-rewind" class="ctrl-btn" title="Rewind 10s">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22">
+                <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
+                <text x="12" y="17" text-anchor="middle" font-size="5.5" font-weight="700" font-family="system-ui,sans-serif">10</text>
+              </svg>
+            </button>
+            <button id="btn-frame-back" class="ctrl-btn" title="Previous frame (,)">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+                <path d="M16 7L8 12l8 5V7zm2.5 0h2v10h-2z"/>
+              </svg>
+            </button>
+            <button id="btn-play" class="ctrl-btn ctrl-btn--primary" title="Play / Pause">
+              <svg id="icon-play" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+              <svg id="icon-pause" viewBox="0 0 24 24" fill="currentColor" width="24" height="24" style="display:none">
+                <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+              </svg>
+            </button>
+            <button id="btn-frame-fwd" class="ctrl-btn" title="Next frame (.)">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+                <path d="M3.5 7h2v10h-2zM8 7l8 5-8 5V7z"/>
+              </svg>
+            </button>
+            <button id="btn-forward" class="ctrl-btn" title="Skip forward 10s">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22">
+                <path d="M18 13c0 3.31-2.69 6-6 6s-6-2.69-6-6 2.69-6 6-6v4l5-5-5-5v4c-4.42 0-8 3.58-8 8s3.58 8 8 8 8-3.58 8-8h-2z"/>
+                <text x="12" y="17" text-anchor="middle" font-size="5.5" font-weight="700" font-family="system-ui,sans-serif">10</text>
+              </svg>
+            </button>
+          </div>
+
+          <div id="speed-control">
+            <span class="ctrl-label">Speed</span>
+            <div id="speed-buttons">
+              <button class="speed-btn" data-speed="0.5">½×</button>
+              <button class="speed-btn active" data-speed="1">1×</button>
+              <button class="speed-btn" data-speed="1.5">1.5×</button>
+              <button class="speed-btn" data-speed="2">2×</button>
+              <button class="speed-btn" data-speed="4">4×</button>
+            </div>
+          </div>
+
+          <div id="right-controls">
+            <button id="btn-mute" class="ctrl-btn" title="Toggle mute">
+              <svg id="icon-unmuted" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+              </svg>
+              <svg id="icon-muted" viewBox="0 0 24 24" fill="currentColor" width="20" height="20" style="display:none">
+                <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3 3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4 9.91 6.09 12 8.18V4z"/>
+              </svg>
+            </button>
+            <button id="btn-fullscreen" class="ctrl-btn" title="Fullscreen">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+              </svg>
+            </button>
+          </div>
+
+        </div>
+      </div><!-- /#controls -->
+
+      <!-- Telemetry panel -->
+      <div id="telemetry-panel">
+        <div class="telemetry-section">
+          <h3>Event Details</h3>
+          <div class="telemetry-row"><span class="tele-key">Time</span>    <span id="tele-time"     class="tele-val">—</span></div>
+          <div class="telemetry-row"><span class="tele-key">Type</span>    <span id="tele-type"     class="tele-val">—</span></div>
+          <div class="telemetry-row"><span class="tele-key">Reason</span>  <span id="tele-reason"   class="tele-val">—</span></div>
+          <div class="telemetry-row"><span class="tele-key">Location</span><span id="tele-location" class="tele-val">—</span></div>
+          <div class="telemetry-row"><span class="tele-key">GPS</span>     <span id="tele-gps"      class="tele-val">—</span></div>
+        </div>
+        <div class="telemetry-section">
+          <h3>Playback</h3>
+          <div class="telemetry-row"><span class="tele-key">Cameras</span> <span id="tele-cameras"  class="tele-val">—</span></div>
+          <div class="telemetry-row"><span class="tele-key">Clips</span>   <span id="tele-clips"    class="tele-val">—</span></div>
+          <div class="telemetry-row"><span class="tele-key">Duration</span><span id="tele-duration" class="tele-val">—</span></div>
+        </div>
+      </div>
+
+    </div><!-- /#viewer -->
+
+  </main>
+
+  <input type="file" id="folder-input" webkitdirectory multiple style="display:none">
+  <div id="toast" class="toast" style="display:none"></div>
+
+  <!-- protobufjs for SEI decoding -->
+  <script src="https://cdn.jsdelivr.net/npm/protobufjs@7/dist/protobuf.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
